@@ -5,6 +5,11 @@ from datetime import datetime
 url = "http://20.207.122.201/evaluation-service/notifications"
 w = {"Placement": 3, "Result": 2, "Event": 1}
 
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from logging_middleware.middleware import Log
+
 def gettok():
     try:
         with open("token.json","r") as f:
@@ -16,13 +21,16 @@ def fetch():
     t = gettok()
     if not t:
         print("no token")
+        Log("backend", "warn", "handler", "no token found for priority inbox fetch")
         return []
     h = {"Authorization": f"Bearer {t}"}
     r = requests.get(url, headers=h, timeout=10)
     if r.status_code == 200:
+        Log("backend", "info", "handler", "successfully fetched notifications from api")
         return r.json().get("notifications", [])
     else:
         print(f"err: {r.status_code}")
+        Log("backend", "error", "handler", f"failed to fetch notifications. Status: {r.status_code}")
         return []
 
 def calc(n):
